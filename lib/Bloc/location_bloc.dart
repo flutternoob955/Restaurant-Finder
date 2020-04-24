@@ -14,7 +14,6 @@ class LocationBloc implements Bloc {
     _locationController.sink.add(location);
   }
 
-  // 4
   @override
   void dispose() {
     _locationController.close();

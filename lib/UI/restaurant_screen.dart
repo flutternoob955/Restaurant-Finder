@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:restaurant_finder/Bloc/bloc_provider.dart';
 import 'package:restaurant_finder/Bloc/restaurant_bloc.dart';

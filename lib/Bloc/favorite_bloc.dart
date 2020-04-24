@@ -5,7 +5,7 @@ import '../DataLayer/restaurant.dart';
 class FavoriteBloc implements Bloc {
   var _restaurants = <Restaurant>[];
   List<Restaurant> get favorites => _restaurants;
-  // 1
+
   final _controller = StreamController<List<Restaurant>>.broadcast();
   Stream<List<Restaurant>> get favoritesStream => _controller.stream;
 

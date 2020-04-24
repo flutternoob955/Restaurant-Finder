@@ -1,4 +1,3 @@
-// 1
 import 'package:flutter/material.dart';
 import 'package:restaurant_finder/Bloc/bloc.dart';
 
@@ -9,20 +8,12 @@ class BlocProvider<T extends Bloc> extends StatefulWidget {
   const BlocProvider({Key key, @required this.bloc, @required this.child})
       : super(key: key);
 
-  // 2
-//  static T of<T extends Bloc>(BuildContext context) {
-//    final type = _providerType<BlocProvider<T>>();
-//    final BlocProvider<T> provider = context.findAncestorWidgetOfExactType();
-//    return provider.bloc;
-//  }
-
   static T of<T extends Bloc>(BuildContext context) {
     final type = _providerType<BlocProvider<T>>();
     final BlocProvider<T> provider = context.ancestorWidgetOfExactType(type);
     return provider.bloc;
   }
 
-  // 3
   static Type _providerType<T>() => T;
 
   @override
@@ -30,11 +21,11 @@ class BlocProvider<T extends Bloc> extends StatefulWidget {
 }
 
 class _BlocProviderState extends State<BlocProvider> {
-  // 4
+
   @override
   Widget build(BuildContext context) => widget.child;
 
-  // 5
+
   @override
   void dispose() {
     widget.bloc.dispose();
