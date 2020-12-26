@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2019 Razeware LLC
- */
 
 class Restaurant {
   final String id;

@@ -1,87 +1,87 @@
 import 'package:flutter/material.dart';
-import 'package:restaurant_finder/Bloc/bloc_provider.dart';
-import 'package:restaurant_finder/Bloc/location_bloc.dart';
-import 'package:restaurant_finder/Bloc/location_query_bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../DataLayer/location.dart';
+import 'package:restaurant_finder/Bloc/bloc.dart';
 
 class LocationScreen extends StatelessWidget {
-
   final bool isFullScreenDialog;
   const LocationScreen({Key key, this.isFullScreenDialog = false})
       : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // 1
-    final bloc = LocationQueryBloc();
-
-    // 2
-    return BlocProvider<LocationQueryBloc>(
-      bloc: bloc,
+    return BlocProvider(
+      create: (context) => LocationQueryBloc(),
       child: Scaffold(
         appBar: AppBar(title: Text('Where do you want to eat?')),
-        body: Column(
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: TextField(
-                decoration: InputDecoration(
-                    border: OutlineInputBorder(), hintText: 'Enter a location'),
-
-                // 3
-                onChanged: (query) => bloc.submitQuery(query),
-              ),
-            ),
-            // 4
-            Expanded(
-              child: _buildResults(bloc),
-            )
-          ],
-        ),
+        body: LocationSubScreen(isFullScreenDialog: isFullScreenDialog),
       ),
     );
   }
+}
 
-  Widget _buildResults(LocationQueryBloc bloc) {
-    return StreamBuilder<List<Location>>(
-      stream: bloc.locationStream,
-      builder: (context, snapshot) {
 
-        // 1
-        final results = snapshot.data;
+class LocationSubScreen extends StatelessWidget {
+  final bool isFullScreenDialog;
+  const LocationSubScreen({Key key, this.isFullScreenDialog = false})
+      : super(key: key);
 
-        if (results == null) {
-          return Center(child: Text('Enter a location'));
-        }
-
-        if (results.isEmpty) {
-          return Center(child: Text('No Results'));
-        }
-
-        return _buildSearchResults(results);
-      },
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: TextField(
+            decoration: InputDecoration(
+                border: OutlineInputBorder(), hintText: 'Enter a location'),
+            onChanged: (query) => BlocProvider.of<LocationQueryBloc>(context)
+                .add(FetchLocation(query: query)),
+          ),
+        ),
+        Expanded(
+          child: _buildResults(),
+        )
+      ],
     );
   }
 
-  Widget _buildSearchResults(List<Location> results) {
-    // 2
+  Widget _buildResults() {
+    return BlocBuilder<LocationQueryBloc, LocationQueryBlocState>(
+        builder: (context, state) {
+      if (state is LocationQueryLoaded) {
+        final locations = state.locations;
+
+        if (locations == null) {
+          return Center(child: Text('Enter a location'));
+        }
+
+        if (locations.isEmpty) {
+          return Center(child: Text('No Results'));
+        }
+
+        return _buildSearchResults(locations);
+      }
+      return Center(child: Text('Enter a location'));
+    });
+  }
+
+  Widget _buildSearchResults(List<Location> locations) {
     return ListView.separated(
-      itemCount: results.length,
+      itemCount: locations.length,
       separatorBuilder: (BuildContext context, int index) => Divider(),
       itemBuilder: (context, index) {
-        final location = results[index];
+        final location = locations[index];
         return ListTile(
           title: Text(location.title),
           onTap: () {
-            final locationBloc = BlocProvider.of<LocationBloc>(context);
-            locationBloc.selectLocation(location);
-            if (isFullScreenDialog) {
-              Navigator.of(context).pop();
-            }
+              BlocProvider.of<LocationBloc>(context).add(PushLocation(location: location));
+              if (isFullScreenDialog) {
+                Navigator.of(context).pop();
+              }
           },
         );
       },
     );
   }
-
 }

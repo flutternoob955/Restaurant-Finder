@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2019 Razeware LLC
- */
-
 import 'dart:async';
 import 'dart:convert' show json;
 import 'package:http/http.dart' as http;

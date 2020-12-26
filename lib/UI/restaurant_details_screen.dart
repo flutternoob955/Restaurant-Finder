@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:restaurant_finder/Bloc/bloc_provider.dart';
-import 'package:restaurant_finder/Bloc/favorite_bloc.dart';
-
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:restaurant_finder/Bloc/bloc.dart';
 import '../DataLayer/restaurant.dart';
 import 'image_container.dart';
 
@@ -27,7 +26,7 @@ class RestaurantDetailsScreen extends StatelessWidget {
               children: <Widget>[
                 Text(
                   restaurant.cuisines,
-                  style: textTheme.subtitle.copyWith(fontSize: 18),
+                  style: textTheme.subtitle2.copyWith(fontSize: 18),
                 ),
                 Text(
                   restaurant.address,
@@ -72,27 +71,25 @@ class RestaurantDetailsScreen extends StatelessWidget {
     );
   }
 
-  // 1
+
   Widget _buildFavoriteButton(BuildContext context) {
-    final bloc = BlocProvider.of<FavoriteBloc>(context);
-    return StreamBuilder<List<Restaurant>>(
-      stream: bloc.favoritesStream,
-      initialData: bloc.favorites,
-      builder: (context, snapshot) {
-        List<Restaurant> favorites =
-        (snapshot.connectionState == ConnectionState.waiting)
-            ? bloc.favorites
-            : snapshot.data;
-        bool isFavorite = favorites.contains(restaurant);
+    return BlocBuilder<FavoriteBloc, FavoriteState>(
+      builder: (context, state) {
+        bool isFavorite = false;
+
+        if (state is FavoriteUpdated) {
+          List<Restaurant> favorites = state.restaurants;
+          isFavorite = favorites.contains(restaurant);
+        }
 
         return FlatButton.icon(
-          // 2
-          onPressed: () => bloc.toggleRestaurant(restaurant),
+          onPressed: () => BlocProvider.of<FavoriteBloc>(context)
+              .add(ToggleRestaurant(restaurant: restaurant)),
           textColor: isFavorite ? Theme.of(context).accentColor : null,
           icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_border),
           label: Text('Favorite'),
         );
-      },
+      }
     );
   }
 }

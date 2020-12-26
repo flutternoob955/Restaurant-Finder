@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:restaurant_finder/Bloc/bloc_provider.dart';
-import 'package:restaurant_finder/Bloc/restaurant_bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:restaurant_finder/Bloc/bloc.dart';
 import 'package:restaurant_finder/UI/restaurant_tile.dart';
-
 import '../DataLayer/location.dart';
 import '../DataLayer/restaurant.dart';
 import 'favorite_screen.dart';
@@ -11,74 +10,78 @@ import 'location_screen.dart';
 class RestaurantScreen extends StatelessWidget {
   final Location location;
 
-  const RestaurantScreen({Key key, @required this.location}) : super(key: key);
+  RestaurantScreen({Key key, @required this.location}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(location.title),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.favorite_border),
-            onPressed: () => Navigator.of(context)
-                .push(MaterialPageRoute(builder: (_) => FavoriteScreen())),
-          )
-        ],
-      ),
-      body: _buildSearch(context),
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.edit_location),
-        onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) => LocationScreen(
-              // 1
-              isFullScreenDialog: true,
-            ),
-            fullscreenDialog: true)),
+
+    return BlocProvider(
+      create: (context) => RestaurantBloc(location: location),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(location.title),
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(Icons.favorite_border),
+              onPressed: () => Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (_) => FavoriteScreen())),
+            )
+          ],
+        ),
+        body: RestaurantSubScreen(location: location),
+        floatingActionButton: FloatingActionButton(
+          child: Icon(Icons.edit_location),
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => LocationScreen(
+                    isFullScreenDialog: true,
+                  ),
+              fullscreenDialog: true)),
+        ),
       ),
     );
   }
+}
 
-  Widget _buildSearch(BuildContext context) {
-    final bloc = RestaurantBloc(location);
+class RestaurantSubScreen extends StatelessWidget {
+  final Location location;
 
-    return BlocProvider<RestaurantBloc>(
-      bloc: bloc,
-      child: Column(
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: TextField(
-              decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'What do you want to eat?'),
-              onChanged: (query) => bloc.submitQuery(query),
-            ),
+  const RestaurantSubScreen({Key key, @required this.location})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: TextField(
+            decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                hintText: 'What do you want to eat?'),
+            onChanged: (query) => BlocProvider.of<RestaurantBloc>(context)
+                .add(FetchRestaurants(query: query)),
           ),
-          Expanded(
-            child: _buildStreamBuilder(bloc),
-          )
-        ],
-      ),
-    );
-  }
+        ),
+        Expanded(child: BlocBuilder<RestaurantBloc, RestaurantState>(
+          builder: (context, state) {
+            if (state is RestaurantLoaded) {
+              final restaurants = state.restaurants;
 
-  Widget _buildStreamBuilder(RestaurantBloc bloc) {
-    return StreamBuilder(
-      stream: bloc.stream,
-      builder: (context, snapshot) {
-        final results = snapshot.data;
+              if (restaurants.isEmpty) {
+                return Center(child: Text('No Results'));
+              }
 
-        if (results == null) {
-          return Center(child: Text('Enter a restaurant name or cuisine type'));
-        }
-
-        if (results.isEmpty) {
-          return Center(child: Text('No Results'));
-        }
-
-        return _buildSearchResults(results);
-      },
+              if (restaurants == null) {
+                return Center(
+                    child: Text('Enter a restaurant name or cuisine type'));
+              }
+              return _buildSearchResults(restaurants);
+            }
+            return Center(
+                child: Text('Enter a restaurant name or cuisine type'));
+          },
+        ))
+      ],
     );
   }
 
